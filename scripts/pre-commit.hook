@@ -5,7 +5,8 @@ CPPCHECK_suppresses="--suppress=unmatchedSuppression \
 --suppress=unmatchedSuppression:main.c \
 --suppress=constParameterPointer:main.c \
 --suppress=constParameterCallback:main.c \
---suppress=unusedFunction:main.c"
+--suppress=unusedFunction:main.c \
+--suppress=unusedFunction:list.h"
 CPPCHECK_OPTS="-I. --enable=all --error-exitcode=1 --force $CPPCHECK_suppresses ."
 
 RETURN=0
@@ -32,12 +33,12 @@ if [ $? -ne 0 ]; then
     DIFF=diff
 fi
 
-FILES=`git diff --cached --name-only --diff-filter=ACMR | grep -E "\.(c|cpp|h)$"`
+FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "\.(c|cpp|h)$")
 for FILE in $FILES; do
-    nf=`git checkout-index --temp $FILE | cut -f 1`
-    tempdir=`mktemp -d` || exit 1
-    newfile=`mktemp ${tempdir}/${nf}.XXXXXX` || exit 1
-    basename=`basename $FILE`
+    nf=$(git checkout-index --temp $FILE | cut -f 1)
+    tempdir=$(mktemp -d) || exit 1
+    newfile=$(mktemp ${tempdir}/${nf}.XXXXXX) || exit 1
+    basename=$(basename $FILE)
 
     source="${tempdir}/${basename}"
     mv $nf $source

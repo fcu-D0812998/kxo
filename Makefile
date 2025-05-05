@@ -12,8 +12,9 @@ all: kmod xo-user
 kmod: $(GIT_HOOKS) main.c
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
-xo-user: xo-user.c
-	$(CC) $(ccflags-y) -o $@ $<
+xo-user: xo-user.c coro.c
+	$(CC) $(ccflags-y) -c -o coro.o coro.c
+	$(CC) $(ccflags-y) -o $@ xo-user.c coro.o
 
 $(GIT_HOOKS):
 	@scripts/install-git-hooks
@@ -22,4 +23,4 @@ $(GIT_HOOKS):
 
 clean:
 	$(MAKE) -C $(KDIR) M=$(PWD) clean
-	$(RM) xo-user
+	$(RM) xo-user coro.o
