@@ -15,6 +15,8 @@
 #define XO_DEVICE_FILE "/dev/kxo"
 #define XO_DEVICE_ATTR_FILE "/sys/class/kxo/kxo/kxo_state"
 
+static char draw_buffer[DRAWBUFFER_SIZE];
+
 extern struct task *cur_task;
 
 static bool status_check(void)
@@ -91,16 +93,36 @@ static void listen_keyboard_handler(void)
 }
 
 static int device_fd;
-static char display_buf[DRAWBUFFER_SIZE];
+static char display_buf[N_GRIDS];
 
-static void draw_board(void)
+
+static int draw_board(char *table)
+{
+    int i = 0, k = 0;
+    draw_buffer[i++] = '\n';
+    draw_buffer[i++] = '\n';
+    while (i < DRAWBUFFER_SIZE) {
+        for (int j = 0; j < (BOARD_SIZE << 1) - 1 && k < N_GRIDS; j++) {
+            draw_buffer[i++] = j & 1 ? '|' : table[k++];
+        }
+        draw_buffer[i++] = '\n';
+        for (int j = 0; j < (BOARD_SIZE << 1) - 1; j++) {
+            draw_buffer[i++] = '-';
+        }
+        draw_buffer[i++] = '\n';
+    }
+    return 0;
+}
+
+static void show_board(void)
 {
     TASK_SCHEDULE();
     while (!end_attr) {
         if (read_attr) {
             printf("\033[H\033[J"); /* ASCII escape code to clear the screen */
-            read(device_fd, display_buf, DRAWBUFFER_SIZE);
-            printf("%s", display_buf);
+            read(device_fd, display_buf, N_GRIDS);
+            draw_board(display_buf);
+            printf("%s", draw_buffer);
         }
         TASK_YIELD();
     }
@@ -121,12 +143,12 @@ int main(int argc, char *argv[])
     end_attr = false;
 
     task_register(listen_keyboard_handler);
-    task_register(draw_board);
+    task_register(show_board);
 
     schedule();
 
     task_deregister(listen_keyboard_handler);
-    task_deregister(draw_board);
+    task_deregister(show_board);
 
 
     raw_mode_disable();
